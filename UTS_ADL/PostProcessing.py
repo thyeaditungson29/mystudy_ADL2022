@@ -10,18 +10,19 @@ import cv2
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 from keras.models import Model, Sequential
 from keras.layers import  * 
-from keras.optimizers import *
+from tensorflow.keras.optimizers import *
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras.metrics import categorical_accuracy
 from keras import backend as K
 from keras import losses
 from keras.models import load_model as keras_load_model
 from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.optimizers import Adam
+# from tensorflow.keras.optimizers import Adam
 from keras.preprocessing.image import ImageDataGenerator
 import sys
-from keras.utils.generic_utils import get_custom_objects
+from keras.utils.generic_utils import get_custom_objects #apakah ini dari modul utils atau keras? kayanya dari keras
 from sklearn.metrics import roc_curve, auc
+
 
 
 sys.path.insert(0, '../')
