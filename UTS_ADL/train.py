@@ -11,7 +11,7 @@ import time
 #from Killer import GracefulKiller
 #killer = GracefulKiller()
 
-param_files = glob.glob("aug*.txt")
+param_files = glob.glob("param*.txt")
 print("I will train on all these parameter files:\n")
 print(*param_files, sep = "\n")
 
