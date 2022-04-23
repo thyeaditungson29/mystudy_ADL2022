@@ -11,7 +11,7 @@ import time
 #from Killer import GracefulKiller
 #killer = GracefulKiller()
 
-param_files = glob.glob("param*.txt")
+param_files = glob.glob("parameters.txt")
 print("I will train on all these parameter files:\n")
 print(*param_files, sep = "\n")
 
@@ -37,24 +37,28 @@ for file in param_files:
     #os.mkdir(tbdir)
     #os.system("killall tensorboard")
     #os.system("tensorboard --logdir=" + tbdir + " --port=7007 &")
+    
     training = TrainingClass.TrainingClass(**params)
-    try:
-        training.fit()
-    except:
-        print("\n Dying... \n")
+    
+    #try:
+    training.fit()
+    #except:
+        #print("\n Dying... \n")
         
     print("Running post training analysis...\n")
+    
         
     h5_files = np.sort(glob.glob(os.path.join(params["save_folder"], "*.h5")))
-    try:
-        pp = PostProcessing( h5_files[-1], params["data_path"], device = "gpu")
-    except:
-        print("You haven't trained anything?")
-        continue
+    #try:
+    pp = PostProcessing(h5_files[-1], params["data_path"], device = "cpu")
+    #except:
+        #print("You haven't trained anything?")
+        #continue
+    
 
     pfile = open(os.path.join(params["save_folder"],  "results.txt"), "w")
     pfile.write("Overall perfomance: \n")
-    accuracy_test, trainable_count = pp.evaluate_overall(device = "gpu")
+    accuracy_test, trainable_count = pp.evaluate_overall(device = "cpu")
     pfile.write("Accuracy: {} \nTrainable parameters: {} \n\n".format(round(accuracy_test,2)*100, trainable_count) )
     
     pfile.write("Performance per class:\n")
@@ -82,5 +86,3 @@ for file in param_files:
     
     rc_fig, rc_ax = pp.ROC_curve()
     rc_fig.savefig( os.path.join(params["save_folder"] , "roc_curve.png") )
-    
-    
