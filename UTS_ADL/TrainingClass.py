@@ -96,13 +96,13 @@ class TrainingClass:
         
       mask_training =[]
       image_training=[]
-      image_list = sorted(os.listdir(self.data_path+'/Training_Image'))[:50]
+      image_list = sorted(os.listdir(self.data_path+'/Train_Image'))[:50]
       mask_list = sorted(os.listdir(self.data_path+'/Mask'))[:50]
       #data_list = os.listdir(data_dir)[:15]
       #label_list = os.listdir(label_dir)[:15]
 
       for image_name in image_list:
-        image = cv2.imread(self.data_path+'/Training_Image' + '/' + image_name)
+        image = cv2.imread(self.data_path+'/Train_Image' + '/' + image_name)
         width, height, channel = image.shape
         image = center_crop(image, (width,height))
         image = cv2.resize(image,(200,200))
