@@ -97,7 +97,7 @@ class TrainingClass:
       label_training =[]
       image_training=[]
       image_list = sorted(os.listdir(self.data_path+'/Train_Image'))[:50]
-      label_list = sorted(os.listdir(self.data_path+'/MAsk'))[:50]
+      label_list = sorted(os.listdir(self.data_path+'/Mask'))[:50]
       #data_list = os.listdir(data_dir)[:15]
       #label_list = os.listdir(label_dir)[:15]
 
