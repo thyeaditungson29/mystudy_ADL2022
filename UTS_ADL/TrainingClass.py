@@ -63,20 +63,74 @@ class TrainingClass:
         self.write_metadata()
         self.compile()
         
-    def load_data(self):
-        "Loads data from h5 file"
-        hf = h5py.File(self.data_path, 'r')
+#     def load_data(self):
+#         "Loads data from h5 file"
+#         hf = h5py.File(self.data_path, 'r')
 
-        self.train = hf['train_img']
-        self.no_images, self.height, self.width, self.channels= self.train.shape
-        self.train_label = hf['train_label']
-        self.train_bodypart = hf['train_bodypart'][:]
-        self.no_images, _, _, self.no_classes = self.train_label.shape
-        self.val = hf['val_img'][:]
-        self.val_label = hf['val_label'][:]
-        self.val_label = self.val_label.reshape((-1,self.height*self.width,self.no_classes))
-        print("Data loaded succesfully.")
+#         self.train = hf['train_img']
+#         self.no_images, self.height, self.width, self.channels= self.train.shape
+#         self.train_label = hf['train_label']
+#         self.train_bodypart = hf['train_bodypart'][:]
+#         self.no_images, _, _, self.no_classes = self.train_label.shape
+#         self.val = hf['val_img'][:]
+#         self.val_label = hf['val_label'][:]
+#         self.val_label = self.val_label.reshape((-1,self.height*self.width,self.no_classes))
+#         print("Data loaded succesfully.")
+    
+    def load_data(self):
+      def center_crop(img, dim):
+        """Returns center cropped image
+        Args:
+        img: image to be center cropped
+        dim: dimensions (width, height) to be cropped from center
+        """
+        width, height = img.shape[1], img.shape[0]
+        #process crop width and height for max available dimension
+        crop_width = dim[0] if dim[0]<img.shape[1] else img.shape[1]
+        crop_height = dim[1] if dim[1]<img.shape[0] else img.shape[0] 
+
+        mid_x, mid_y = int(width/2), int(height/2)
+        cw2, ch2 = int(crop_width/2), int(crop_height/2) 
+        crop_img = img[mid_y-ch2:mid_y+ch2, mid_x-cw2:mid_x+cw2]
+        return crop_img
         
+      mask_training =[]
+      image_training=[]
+      image_list = sorted(os.listdir(self.data_path+'/Training_Image'))[:50]
+      mask_list = sorted(os.listdir(self.data_path+'/Mask'))[:50]
+      #data_list = os.listdir(data_dir)[:15]
+      #label_list = os.listdir(label_dir)[:15]
+
+      for image_name in image_list:
+        image = cv2.imread(self.data_path+'/Training_Image' + '/' + image_name)
+        width, height, channel = image.shape
+        image = center_crop(image, (width,height))
+        image = cv2.resize(image,(200,200))
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        image_training.append(image)
+      
+      for mask_name in mask_list:
+        mask = cv2.imread(self.data_path+'/Mask' + '/' + mask_name)
+        width, height, channel = mask.shape
+        mask = center_crop(mask, (width,height))
+        mask = cv2.resize(mask,(200,200))
+        mask_training.append(mask)
+
+      image_training = np.asarray(image_training)
+      mask_training = np.asarray(label_training)
+      n, h, w = image_training.shape
+      image_training = image_training.reshape(n, h, w, 1)
+      mask_training = mask_training.reshape(n, h, w, 3)
+
+      self.train = image_training[:40]
+      self.no_images, self.height, self.width, self.channels= self.train.shape
+      self.train_mask = mask_training[:40]
+      self.no_images, _, _, self.no_classes = self.train_mask.shape
+      self.val = image_training[40:50]
+      self.val_mask = mask_training[40:50]
+      self.val_mask = self.val_mask.reshape((-1,self.height*self.width,self.no_classes))
+      print("Data loaded succesfully.")
+    
     def write_metadata(self):
         "Writes metadata to a txt file, with all the training information"
         metafile_path = self.save_folder + "/metadata.txt"
