@@ -94,10 +94,10 @@ class TrainingClass:
         crop_img = img[mid_y-ch2:mid_y+ch2, mid_x-cw2:mid_x+cw2]
         return crop_img
         
-      mask_training =[]
+      label_training =[]
       image_training=[]
       image_list = sorted(os.listdir(self.data_path+'/Train_Image'))[:50]
-      mask_list = sorted(os.listdir(self.data_path+'/Mask'))[:50]
+      label_list = sorted(os.listdir(self.data_path+'/label'))[:50]
       #data_list = os.listdir(data_dir)[:15]
       #label_list = os.listdir(label_dir)[:15]
 
@@ -109,26 +109,26 @@ class TrainingClass:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         image_training.append(image)
       
-      for mask_name in mask_list:
-        mask = cv2.imread(self.data_path+'/Mask' + '/' + mask_name)
-        width, height, channel = mask.shape
-        mask = center_crop(mask, (width,height))
-        mask = cv2.resize(mask,(200,200))
-        mask_training.append(mask)
+      for label_name in label_list:
+        label = cv2.imread(self.data_path+'/label' + '/' + label_name)
+        width, height, channel = label.shape
+        label = center_crop(label, (width,height))
+        label = cv2.resize(label,(200,200))
+        label_training.append(label)
 
       image_training = np.asarray(image_training)
-      mask_training = np.asarray(label_training)
+      label_training = np.asarray(label_training)
       n, h, w = image_training.shape
       image_training = image_training.reshape(n, h, w, 1)
-      mask_training = mask_training.reshape(n, h, w, 3)
+      label_training = label_training.reshape(n, h, w, 3)
 
       self.train = image_training[:40]
       self.no_images, self.height, self.width, self.channels= self.train.shape
-      self.train_mask = mask_training[:40]
-      self.no_images, _, _, self.no_classes = self.train_mask.shape
+      self.train_label = label_training[:40]
+      self.no_images, _, _, self.no_classes = self.train_label.shape
       self.val = image_training[40:50]
-      self.val_mask = mask_training[40:50]
-      self.val_mask = self.val_mask.reshape((-1,self.height*self.width,self.no_classes))
+      self.val_label = label_training[40:50]
+      self.val_label = self.val_label.reshape((-1,self.height*self.width,self.no_classes))
       print("Data loaded succesfully.")
     
     def write_metadata(self):
