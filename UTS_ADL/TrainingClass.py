@@ -97,7 +97,7 @@ class TrainingClass:
       label_training =[]
       image_training=[]
       image_list = sorted(os.listdir(self.data_path+'/Train_Image'))[:50]
-      label_list = sorted(os.listdir(self.data_path+'/label'))[:50]
+      label_list = sorted(os.listdir(self.data_path+'/MAsk'))[:50]
       #data_list = os.listdir(data_dir)[:15]
       #label_list = os.listdir(label_dir)[:15]
 
@@ -110,7 +110,7 @@ class TrainingClass:
         image_training.append(image)
       
       for label_name in label_list:
-        label = cv2.imread(self.data_path+'/label' + '/' + label_name)
+        label = cv2.imread(self.data_path+'/Mask' + '/' + label_name)
         width, height, channel = label.shape
         label = center_crop(label, (width,height))
         label = cv2.resize(label,(200,200))
