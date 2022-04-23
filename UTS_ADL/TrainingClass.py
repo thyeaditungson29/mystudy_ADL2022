@@ -7,13 +7,14 @@ import signal
 import shutil
 import importlib.util
 import time
+import cv2
 
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 from keras.models import Model, Sequential, load_model
 from keras.layers import * 
 from keras import backend as K
 from keras import losses
-from keras.optimizers import *
+from tensorflow.keras.optimizers import Adam, RMSprop
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler, CSVLogger, TensorBoard, EarlyStopping
 from keras.metrics import categorical_accuracy
 from utils import shuffle_together_simple, random_crop
@@ -57,9 +58,9 @@ class TrainingClass:
         else:
             self.loss = loss
         self.load_data()
-        if(duplicate == True):
-            self.train, self.train_label, self.train_bodypart = self.duplicate()
-            print("Finished duplicating images, the final size of your training set is %d images."%self.train.shape[0])
+        # if(duplicate == True):
+        #     self.train, self.train_label, self.train_bodypart = self.duplicate()
+        #     print("Finished duplicating images, the final size of your training set is %d images."%self.train.shape[0])
         self.write_metadata()
         self.compile()
         
@@ -171,45 +172,45 @@ class TrainingClass:
                 bx = self.train[batch_indices]
                 
                 yield(bx,by)
-    def duplicate(self):
-        "Since our dataset is highly imbalanced among bodyparts, duplicate images from underrepresented bodyparts"
-        img_per_category, counts = np.unique(self.train_bodypart, return_counts=True)
-        img_per_category = dict(zip(img_per_category, counts))
-        EXAMPLES_PER_CATEGORY = max(img_per_category.values())
-        duplications_per_category = dict(img_per_category)
-        for key in img_per_category:
-            duplications_per_category[key] = int(EXAMPLES_PER_CATEGORY/img_per_category[key])
+    # def duplicate(self):
+    #     "Since our dataset is highly imbalanced among bodyparts, duplicate images from underrepresented bodyparts"
+    #     img_per_category, counts = np.unique(self.train_bodypart, return_counts=True)
+    #     img_per_category = dict(zip(img_per_category, counts))
+    #     EXAMPLES_PER_CATEGORY = max(img_per_category.values())
+    #     duplications_per_category = dict(img_per_category)
+    #     for key in img_per_category:
+    #         duplications_per_category[key] = int(EXAMPLES_PER_CATEGORY/img_per_category[key])
 
-        duplicated_size = sum(duplications_per_category[k]*img_per_category[k] + img_per_category[k] \
-                   for k in duplications_per_category)
+    #     duplicated_size = sum(duplications_per_category[k]*img_per_category[k] + img_per_category[k] \
+    #                for k in duplications_per_category)
 
-        train_duplicated = np.zeros((duplicated_size,self.height,self.width,self.train.shape[3]))
-        labels_duplicated = np.zeros((duplicated_size,self.height, self.width,self.no_classes))
-        bodypart_duplicated = np.empty((duplicated_size),dtype = 'S10')
+    #     train_duplicated = np.zeros((duplicated_size,self.height,self.width,self.train.shape[3]))
+    #     labels_duplicated = np.zeros((duplicated_size,self.height, self.width,self.no_classes))
+    #     bodypart_duplicated = np.empty((duplicated_size),dtype = 'S10')
 
-        train_duplicated[:self.no_images,...] = self.train
-        labels_duplicated[:self.no_images,...] = self.train_label
-        bodypart_duplicated[:self.no_images,...] = self.train_bodypart
+    #     train_duplicated[:self.no_images,...] = self.train
+    #     labels_duplicated[:self.no_images,...] = self.train_label
+    #     bodypart_duplicated[:self.no_images,...] = self.train_bodypart
 
-        # Loop  over the different kind of bodyparts
-        counter = self.no_images
-        counter_block = 0
-        for i, (k, v) in enumerate(duplications_per_category.items()):
-            # Indices of images with a given bodypart
-            indices = np.array(np.where(self.train_bodypart == k )[0])
-            counter_block += len(indices)
-            # Number of augmentation per image
-            N = int(v)
-            for j in indices:
-                for l in range(N):
-                    train_duplicated[counter,...] =self.train[j]
-                    labels_duplicated[counter,...] = self.train_label[j]
-                    bodypart_duplicated[counter] = k
-                    counter +=1
+    #     # Loop  over the different kind of bodyparts
+    #     counter = self.no_images
+    #     counter_block = 0
+    #     for i, (k, v) in enumerate(duplications_per_category.items()):
+    #         # Indices of images with a given bodypart
+    #         indices = np.array(np.where(self.train_bodypart == k )[0])
+    #         counter_block += len(indices)
+    #         # Number of augmentation per image
+    #         N = int(v)
+    #         for j in indices:
+    #             for l in range(N):
+    #                 train_duplicated[counter,...] =self.train[j]
+    #                 labels_duplicated[counter,...] = self.train_label[j]
+    #                 bodypart_duplicated[counter] = k
+    #                 counter +=1
 
-        train_duplicated, labels_duplicated, bodypart_duplicated = shuffle_together_simple(train_duplicated, labels_duplicated, bodypart_duplicated)
-        self.no_images = train_duplicated.shape[0]
-        return train_duplicated, labels_duplicated, bodypart_duplicated
+    #     train_duplicated, labels_duplicated, bodypart_duplicated = shuffle_together_simple(train_duplicated, labels_duplicated, bodypart_duplicated)
+    #     self.no_images = train_duplicated.shape[0]
+    #     return train_duplicated, labels_duplicated, bodypart_duplicated
 
     def augmentator(self, index):
         " This function defines the trainsformations to apply on the images, and if required on the labels"
@@ -333,8 +334,8 @@ class TrainingClass:
         print(self.model_path)
         self.model_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.model_module)
-        self.model = self.model_module.model(l2_lambda = self.reg, input_shape = (self.height, self.width, self.channels), classes = self.no_classes, kernel_size = self.kernel_size, filter_depth = self.filters)
-        self.model.compile(optimizer = rmsprop(lr = self.lrate, decay = 1e-6), loss = self.loss, metrics = ['accuracy'])
+        self.model = self.model_module.model(input_shape = (self.height, self.width, self.channels), classes = self.no_classes, kernel_size = self.kernel_size, filter_depth = self.filters)
+        self.model.compile(optimizer = RMSprop(lr = self.lrate, decay = 1e-6), loss = self.loss, metrics = ['accuracy'])
         #self.model.compile(optimizer = Adam(lr = self.lrate), loss = self.loss, metrics = ['accuracy'])
         #self.model.compile(optimizer = SGD(lr = self.lrate, momentum = 0.9, nesterov = True), loss = self.loss, metrics = ['accuracy'])
         print("Model loaded and compiled succesfully.")
