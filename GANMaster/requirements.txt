@@ -1,0 +1,13 @@
+torch==1.1.0
+torchvision
+librosa
+pescador
+matplotlib
+numpy
+scipy
+pillow
+urllib3
+scikit-image
+tqdm
+opencv-python
+tensorboardX
